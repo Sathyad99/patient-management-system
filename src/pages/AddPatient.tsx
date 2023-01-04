@@ -4,6 +4,8 @@ import { useDispatch } from "react-redux";
 import { createPatient } from "../redux/slices/patientSlice";
 import { IPatientsCreate } from "../commonTypes";
 import { getRecordsSuccess } from "../redux/slices/medicalRecordsSlice";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export function AddPatient() {
   const dispatch = useDispatch();
@@ -25,7 +27,7 @@ export function AddPatient() {
 
   const submitForm = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const values:IPatientsCreate = {
+    const values: IPatientsCreate = {
       name: name,
       dob: new Date(dob),
       weightKG: +weightKG,
@@ -37,10 +39,15 @@ export function AddPatient() {
     console.log("Checking the values array", values);
     postPatients(
       values,
-      (successData: any) => {console.log(successData)},
-      (errorData: any) => console.log(errorData)
+      (successData: any) => {
+        const reload= ()=>window.location.reload()
+        toast(successData);
+        setTimeout(reload,5000)
+      },
+      (errorData: any) => toast(errorData)
     );
     dispatch(createPatient(values));
+    
   };
 
   return (
@@ -134,6 +141,7 @@ export function AddPatient() {
         <button type="submit" className="btn btn-primary ms-3">
           Submit
         </button>
+        <ToastContainer />
       </form>
     </div>
   );
