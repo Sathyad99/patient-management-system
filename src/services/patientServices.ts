@@ -1,5 +1,10 @@
-import api from "../api";
-import { IPatients, IPatientsCreate } from "../commonTypes";
+import api from "../config/api";
+import {
+  IMedicalRecordsCreate,
+  IPatients,
+  IPatientsCreate,
+  IPatientsEdit
+} from "../config/commonTypes";
 
 export const getPatients = (
   success: (d: any) => void,
@@ -30,11 +35,27 @@ export const postPatients = (
   );
 };
 
-export const getMedicalRecords = (
+export const getMedicalRecordsById = (
+  patientId: number,
   success: (d: any) => void,
   failed: (d: any) => void
 ) => {
-  api.get("MedicalRecords").then(
+  api.get("MedicalRecords/GetMedicalRecordByPatientId?pid=" + patientId).then(
+    (response) => {
+      success(response);
+    },
+    (error) => {
+      failed(error);
+    }
+  );
+};
+
+export const addMedicalRecords = (
+  values: IMedicalRecordsCreate,
+  success: (d: any) => void,
+  failed: (d: any) => void
+) => {
+  api.post("MedicalRecords", values).then(
     (response) => {
       success(response);
     },
@@ -58,3 +79,21 @@ export const deletePatients = (
     }
   );
 };
+
+export const editPatients = (
+  patientId: number,
+  values: IPatientsEdit,
+  success: (d: any) => void,
+  failed: (d: any) => void
+) => {
+  console.log("Inside the edit patients!!!!!!!");
+  
+  api.put("patients/" + patientId, values).then(
+    (response) => {
+      success(response);
+    },
+    (error) => {
+      failed(error);
+    }
+  )
+}

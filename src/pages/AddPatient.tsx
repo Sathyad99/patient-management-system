@@ -1,21 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { getMedicalRecords, postPatients } from "../services/patientServices";
+import { postPatients } from "../services/patientServices";
 import { useDispatch } from "react-redux";
-import { createPatient } from "../redux/slices/patientSlice";
-import { IPatientsCreate } from "../commonTypes";
-import { getRecordsSuccess } from "../redux/slices/medicalRecordsSlice";
-import { ToastContainer, toast } from "react-toastify";
+import { IPatientsCreate } from "../config/commonTypes";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export function AddPatient() {
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    getMedicalRecords(
-      (successData: any) => dispatch(getRecordsSuccess(successData)),
-      (errorData: any) => console.log(errorData)
-    );
-  }, []);
 
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
@@ -40,20 +31,23 @@ export function AddPatient() {
     postPatients(
       values,
       (successData: any) => {
-        const reload= ()=>window.location.reload()
         toast(successData);
-        setTimeout(reload,5000)
       },
-      (errorData: any) => toast(errorData)
+      (errorData: any) => toast("Unable to create the patient")
     );
-    dispatch(createPatient(values));
-    
+      setName("");
+      setDob("");
+      setWeight("");
+      setHeight("");
+      setAddress("");
+      setContact("");
+      setEmergency("");
   };
 
   return (
     <div>
       <h2>Add patient</h2>
-      <form action="" onSubmit={submitForm}>
+      <form className="mx-auto" onSubmit={submitForm}>
         <div className="mb-3 ms-3 w-25">
           <label htmlFor="Name" className="form-label">
             Name
@@ -141,7 +135,6 @@ export function AddPatient() {
         <button type="submit" className="btn btn-primary ms-3">
           Submit
         </button>
-        <ToastContainer />
       </form>
     </div>
   );

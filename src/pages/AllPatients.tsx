@@ -1,16 +1,38 @@
-import React, { useEffect, FC, useState } from "react";
-import { getPatients, deletePatients } from "../services/patientServices";
+import { useEffect, useState } from "react";
+import {
+  getPatients,
+  deletePatients,
+  editPatients,
+} from "../services/patientServices";
 import { useDispatch } from "react-redux";
 import { getPatientsSuccess } from "../redux/slices/patientSlice";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { IPatients } from "../commonTypes";
-import { IState } from "../commonTypes";
+import { IPatients, IPatientsEdit } from "../config/commonTypes";
+import { IState } from "../config/commonTypes";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
 
 export function AllPatients() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [currentPatientID, setCurrentPatientID] = useState<number>();
+  const [weightKG, setWeight] = useState("");
+  const [heightCM, setHeight] = useState("");
+  const [address, setAddress] = useState("");
+  const [contact, setContact] = useState("");
+  const [emergencyContact, setEmergency] = useState("");
+  const [show, setShow] = useState(false);
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
+  const patients: IPatients[] = useSelector(
+    (state: IState) => state.patients.patients
+  );
+  console.log("Patients from the state", patients);
 
   useEffect(() => {
     getPatients(
@@ -19,18 +41,37 @@ export function AllPatients() {
     );
   }, []);
 
-  const patients: IPatients[] = useSelector(
-    (state: IState) => state.patients.patients
-  );
-  console.log("Patients from the state", patients);
+  const submitHandler = async (patientId: number | undefined) => {
+    const values: IPatientsEdit = {
+      name: "",
+      weightKG: +weightKG,
+      heightCM: +heightCM,
+      address: address,
+      contact: contact,
+      emergencyContact: emergencyContact,
+    };
+    console.log("Checking the new values array", values);
+    console.log("Checking the patient ID", patientId);
 
-  const deleteHandler = (patientId: number|undefined) => {
-    patientId && 
-    deletePatients(
-      patientId,
-      (successData: any) => console.log(successData),
-      (errorData: any) => console.log(errorData)
-    );
+    patientId &&
+      editPatients(
+        patientId,
+        values,
+        (successData: any) => {
+          toast(successData);
+        },
+        (errorData: any) => toast("Unable to create the patient")
+      );
+  };
+
+  const deleteHandler = async (patientId: number | undefined) => {
+    console.log("Checking the patient ID", patientId);
+    patientId &&
+      deletePatients(
+        patientId,
+        (successData: any) => toast(successData),
+        (errorData: any) => toast(errorData)
+      );
   };
 
   return (
@@ -73,11 +114,16 @@ export function AllPatients() {
                   </button>
                 </td>
                 <td>
+                  {/* Edit button */}
                   <button
                     type="button"
                     className="btn btn-outline-primary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#editmodal"
+                    onClick={() => {
+                      console.log("What's the wrooonnnngggg");
+                      handleShow();
+                      setCurrentPatientID(patient.id);
+                      
+                    }}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -96,8 +142,9 @@ export function AllPatients() {
                   </button>
                 </td>
                 <td>
+                  {/* Delete button */}
                   <button
-                    onClick={()=>{setCurrentPatientID(patient.id)}}
+                    onClick={() => setCurrentPatientID(patient.id)}
                     type="button"
                     className="btn btn-outline-danger"
                     data-bs-toggle="modal"
@@ -120,53 +167,61 @@ export function AllPatients() {
         </tbody>
       </table>
 
-      {/* Modal edit*/}
-      <div
-        className="modal fade"
-        id="editmodal"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modeal-lg modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h1 className="modal-title fs-5" id="exampleModalLabel">
-                Patient details
-              </h1>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div className="modal-body">
-              <span className="input-group-text">Weight(kg)</span>
-              <input type="text" className="form-control" />
-              <span className="input-group-text">Height(cm)</span>
-              <input type="text" className="form-control" />
-              <span className="input-group-text">Address</span>
-              <input type="text" className="form-control" />
-              <span className="input-group-text">Contact number</span>
-              <input type="text" className="form-control" />
-              <span className="input-group-text">Emergency contact number</span>
-              <input type="text" className="form-control" />
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Close
-              </button>
-              <button type="button" className="btn btn-primary">
-                Save changes
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Modal show={show} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Patient details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitHandler(currentPatientID);
+            }}
+          >
+            <span className="input-group-text">Weight(kg)</span>
+            <input
+              type="text"
+              className="form-control"
+              value={weightKG}
+              onChange={(e) => setWeight(e.target.value)}
+            />
+            <span className="input-group-text">Height(cm)</span>
+            <input
+              type="text"
+              className="form-control"
+              value={heightCM}
+              onChange={(e) => setHeight(e.target.value)}
+            />
+            <span className="input-group-text">Address</span>
+            <input
+              type="text"
+              className="form-control"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+            <span className="input-group-text">Contact number</span>
+            <input
+              type="text"
+              className="form-control"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+            />
+            <span className="input-group-text">Emergency contact number</span>
+            <input
+              type="text"
+              className="form-control"
+              value={emergencyContact}
+              onChange={(e) => setEmergency(e.target.value)}
+            />
+            <button type="submit">Save Changes</button>
+          </form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Modal delete*/}
       <div
@@ -199,7 +254,8 @@ export function AllPatients() {
               <button
                 type="button"
                 className="btn btn-danger"
-                onClick={()=>deleteHandler(currentPatientID)}
+                data-bs-dismiss="modal"
+                onClick={() => deleteHandler(currentPatientID)}
               >
                 Yes
               </button>

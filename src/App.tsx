@@ -8,11 +8,13 @@ import { Navbar } from "./components/Navbar";
 import { Provider } from "react-redux";
 import {store} from "./redux/store";
 import Login from "./pages/Login";
+import { ToastContainer } from "react-toastify";
 function App() {
   return (
     <Provider store={store}>
       <Navbar />
       <Container className="mb-4">
+      <ToastContainer />
         <Routes>
           <Route path="/" element={<AddPatient />} />
           <Route path="/allPatients" element={<AllPatients/>} />

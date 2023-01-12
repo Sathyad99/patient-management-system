@@ -1,34 +1,89 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getMedicalRecords } from "../services/patientServices";
+import {
+  addMedicalRecords,
+  getMedicalRecordsById,
+} from "../services/patientServices";
 import { useDispatch, useSelector } from "react-redux";
 import { getRecordsSuccess } from "../redux/slices/medicalRecordsSlice";
-import { IMedicalRecords, IState } from "../commonTypes";
+import {
+  IMedicalRecords,
+  IMedicalRecordsCreate,
+  IState,
+} from "../config/commonTypes";
+import { toast } from "react-toastify";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
 
 export function PatientProfile() {
   const dispatch = useDispatch();
+  const [date, setDate] = useState("");
+  const [temperature, setTemperature] = useState("");
+  const [sugar, setSugar] = useState("");
+  const [platelet, setPlatelet] = useState("");
+  const [hemoglobin, setHemogblobin] = useState("");
+  const [show, setShow] = useState(false);
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
   let { patientId } = useParams();
   const patientIdNumber: number = patientId ? +patientId : 0;
-  console.log("Checking the type", typeof patientId);
 
   useEffect(() => {
-    getMedicalRecords(
-      (successData: any) => dispatch(getRecordsSuccess(successData)),
-      (errorData: any) => console.log(errorData)
-    );
+    patientIdNumber !== 0 &&
+      getMedicalRecordsById(
+        patientIdNumber,
+        (successData: any) => dispatch(getRecordsSuccess(successData)),
+        (errorData: any) => console.log(errorData)
+      );
   }, []);
 
   const records: IMedicalRecords[] = useSelector(
     (state: IState) => state.records.records
   );
-  console.log("Records from the state", records);
-  const selectedPatient = records.filter((record, patientIdNumber) => {
-    record.patientId === patientIdNumber;
-  });
-  console.log("Selected patient", selectedPatient);
-  
 
+  const submitForm = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("Inside the submit in add medical records");
+
+    const values: IMedicalRecordsCreate = {
+      created: new Date(date),
+      createdBy: "Admin",
+      lastModified: new Date(date),
+      lastModifiedBy: "Admin",
+      sampleCollectedDate: new Date(date),
+      sugarLevelMmol: +sugar,
+      temperatureCelcius: +temperature,
+      plateletCountPpm: +platelet,
+      hbLevelGdl: +hemoglobin,
+      patientId: patientIdNumber,
+    };
+    addMedicalRecords(
+      values,
+      (successData: any) => {
+        toast(successData);
+      },
+      (errorData: any) => {
+        toast("Unable to add the record");
+      }
+    );
+    setDate("");
+    setTemperature("");
+    setSugar("");
+    setPlatelet("");
+    setHemogblobin("");
+
+    handleClose();
+  };
+
+  const resetHandler: any = () => {
+    setDate("");
+    setTemperature("");
+    setSugar("");
+    setPlatelet("");
+    setHemogblobin("");
+  };
   return (
     <div>
       <h1>Patient profile</h1>
@@ -40,8 +95,7 @@ export function PatientProfile() {
         <button
           type="button"
           className="btn btn-primary ms-4"
-          data-bs-toggle="modal"
-          data-bs-target="#exampleModal2"
+          onClick={handleShow}
         >
           Add new record
         </button>
@@ -58,64 +112,76 @@ export function PatientProfile() {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>12-12-2022</td>
-              <td>36</td>
-              <td>120</td>
-              <td>500000</td>
-              <td>11</td>
-            </tr>
+            {records?.length &&
+              records?.map((record: IMedicalRecords) => (
+                <tr key={record.id}>
+                  <td>
+                    {record.sampleCollectedDate.toString().substring(0, 10)}
+                  </td>
+                  <td>{record.temperatureCelcius}</td>
+                  <td>{record.sugarLevelMmol}</td>
+                  <td>{record.plateletCountPpm}</td>
+                  <td>{record.hbLevelGdl}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
-      {/* Modal prescription*/}
-      <div
-        className="modal fade"
-        id="exampleModal2"
-        // tabIndex=-1"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modeal-lg modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h1 className="modal-title fs-5" id="exampleModalLabel">
-                New medical record
-              </h1>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div className="modal-body">
-              <span className="input-group-text">Date</span>
-              <input type="text" className="form-control" />
-              <span className="input-group-text">Temperature(Celcius)</span>
-              <input type="text" className="form-control" />
-              <span className="input-group-text">Sugar level(mmol/L)</span>
-              <input type="text" className="form-control" />
-              <span className="input-group-text">Platelet count(ppm)</span>
-              <input type="text" className="form-control" />
-              <span className="input-group-text">Hemoglobin level(gdl)</span>
-              <input type="text" className="form-control" />
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Close
-              </button>
-              <button type="button" className="btn btn-primary">
-                Save changes
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Modal show={show} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>New medical record</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <form onSubmit={submitForm}>
+            <span className="input-group-text">Date</span>
+            <input
+              type="date"
+              className="form-control"
+              id="Name"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+            <span className="input-group-text">Temperature(Celcius)</span>
+            <input
+              type="number"
+              className="form-control"
+              id="Name"
+              value={temperature}
+              onChange={(e) => setTemperature(e.target.value)}
+            />
+            <span className="input-group-text">Sugar level(mmol/L)</span>
+            <input
+              type="number"
+              className="form-control"
+              id="Name"
+              value={sugar}
+              onChange={(e) => setSugar(e.target.value)}
+            />
+            <span className="input-group-text">Platelet count(ppm)</span>
+            <input
+              type="number"
+              className="form-control"
+              id="Name"
+              value={platelet}
+              onChange={(e) => setPlatelet(e.target.value)}
+            />
+            <span className="input-group-text">Hemoglobin level(gdl)</span>
+            <input
+              type="number"
+              className="form-control"
+              id="Name"
+              value={hemoglobin}
+              onChange={(e) => setHemogblobin(e.target.value)}
+            />
+            <Button variant="primary" type="submit">
+              Save Changes
+            </Button>
+            <Button variant="secondary" onClick={resetHandler}>
+              Reset
+            </Button>
+          </form>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

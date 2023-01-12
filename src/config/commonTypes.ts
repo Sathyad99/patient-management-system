@@ -43,3 +43,25 @@ export interface IMedicalRecords {
   lastModifiedBy: string;
   id: number;
 }
+
+export interface IMedicalRecordsCreate {
+  created: Date;
+  createdBy: string;
+  lastModified: Date;
+  lastModifiedBy: string;
+  sampleCollectedDate: Date;
+  sugarLevelMmol: number;
+  temperatureCelcius: number;
+  plateletCountPpm: number;
+  hbLevelGdl: number;
+  patientId: number;
+}
+
+export interface IPatientsEdit {
+  name: string;
+  weightKG: number;
+  heightCM: number;
+  address: string;
+  contact: string;
+  emergencyContact: string;
+}
