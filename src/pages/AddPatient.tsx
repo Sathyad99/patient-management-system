@@ -1,141 +1,162 @@
-import React, { useState, useEffect } from "react";
 import { postPatients } from "../services/patientServices";
-import { useDispatch } from "react-redux";
-import { IPatientsCreate } from "../config/commonTypes";
+import { IPatientsCreate, IFormikHandlers } from "../config/commonTypes";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from "yup";
 
 export function AddPatient() {
-  const dispatch = useDispatch();
+  const createValidationSchema = Yup.object().shape({
+    name: Yup.string()
+      .min(3, ({ min }) => `Name must be at least ${min} characters long`)
+      .required("Name is required"),
+    dob: Yup.date().max(new Date()).required("Date of birth is required"),
+    weightKG: Yup.number().positive().required("Weight is required"),
+    heightCM: Yup.number().positive().required("Height is required"),
+    address: Yup.number().positive().required("Address is required"),
+    contact: Yup.string()
+      .min(
+        10,
+        ({ min }) => `Contact number should not be less than ${min} digits`
+      )
+      .max(
+        10,
+        ({ max }) => `Contact number should not be longer than ${max} digits`
+      )
+      .required("Contact number is required"),
+    emergencyContact: Yup.string()
+      .min(
+        10,
+        ({ min }) => `Contact number should not be less than ${min} digits`
+      )
+      .max(
+        10,
+        ({ max }) => `Contact number should not be longer than ${max} digits`
+      )
+      .required("Contact number is required"),
+  });
 
-  const [name, setName] = useState("");
-  const [dob, setDob] = useState("");
-  const [weightKG, setWeight] = useState("");
-  const [heightCM, setHeight] = useState("");
-  const [address, setAddress] = useState("");
-  const [contact, setContact] = useState("");
-  const [emergencyContact, setEmergency] = useState("");
+  const initialValues: IPatientsCreate = {
+    name: "",
+    dob: new Date(),
+    weightKG: 0,
+    heightCM: 0,
+    address: "",
+    contact: "",
+    emergencyContact: "",
+  };
 
-  const submitForm = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const values: IPatientsCreate = {
-      name: name,
-      dob: new Date(dob),
-      weightKG: +weightKG,
-      heightCM: +heightCM,
-      address: address,
-      contact: contact,
-      emergencyContact: emergencyContact,
-    };
-    console.log("Checking the values array", values);
+  const handleSubmit = async (values:IPatientsCreate, form:IFormikHandlers) => {
     postPatients(
       values,
       (successData: any) => {
         toast(successData);
+        form.resetForm();
       },
       (errorData: any) => toast("Unable to create the patient")
     );
-      setName("");
-      setDob("");
-      setWeight("");
-      setHeight("");
-      setAddress("");
-      setContact("");
-      setEmergency("");
   };
 
   return (
     <div>
       <h2>Add patient</h2>
-      <form className="mx-auto" onSubmit={submitForm}>
-        <div className="mb-3 ms-3 w-25">
-          <label htmlFor="Name" className="form-label">
-            Name
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            id="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div className="mb-3 ms-3 w-25">
-          <label htmlFor="DOB" className="form-label">
-            Date of birth
-          </label>
-          <input
-            type="date"
-            className="form-control"
-            id="DOB"
-            value={dob}
-            onChange={(e) => setDob(e.target.value)}
-          />
-        </div>
-        <div className="mb-3 ms-3 w-25">
-          <label htmlFor="exampleInputWeight" className="form-label">
-            Weight (kg)
-          </label>
-          <input
-            type="number"
-            className="form-control"
-            id="Weight"
-            value={weightKG}
-            onChange={(e) => setWeight(e.target.value)}
-          />
-        </div>
-        <div className="mb-3 ms-3 w-25">
-          <label htmlFor="exampleInputHeight" className="form-label">
-            Height (cm)
-          </label>
-          <input
-            type="number"
-            className="form-control"
-            id="Height"
-            value={heightCM}
-            onChange={(e) => setHeight(e.target.value)}
-          />
-        </div>
-        <div className="mb-3 ms-3 w-25">
-          <label htmlFor="exampleInputAddress" className="form-label">
-            Address
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            id="Address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-        </div>
-        <div className="mb-3 ms-3 w-25">
-          <label htmlFor="exampleInputContact" className="form-label">
-            Contact number
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            id="Contact"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-          />
-        </div>
-        <div className="mb-3 ms-3 w-25">
-          <label htmlFor="exampleInputEmergrncy" className="form-label">
-            Emergency contact number
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            id="Emergrncy"
-            value={emergencyContact}
-            onChange={(e) => setEmergency(e.target.value)}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary ms-3">
-          Submit
-        </button>
-      </form>
+      <Formik
+        validationSchema={createValidationSchema}
+        initialValues={initialValues}
+        onSubmit={(values, form) => handleSubmit(values, form)}
+      >
+        {({isSubmitting}) => (
+            <Form className="mx-auto">
+              <div className="mb-3 ms-3 w-25">
+                <label htmlFor="Name" className="form-label">
+                  Name
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="Name"
+                  name="name"
+                />
+                <ErrorMessage name="name" component="div" className="text-danger" />
+              </div>
+              <div className="mb-3 ms-3 w-25">
+                <label htmlFor="DOB" className="form-label">
+                  Date of birth
+                </label>
+                <Field
+                  type="date"
+                  className="form-control"
+                  id="DOB"
+                  name="dob"
+                />
+                <ErrorMessage name="dob" component="div" className="text-danger" />
+              </div>
+              <div className="mb-3 ms-3 w-25">
+                <label htmlFor="exampleInputWeight" className="form-label">
+                  Weight (kg)
+                </label>
+                <Field
+                  type="number"
+                  className="form-control"
+                  id="Weight"
+                  name="weightKG"
+                />
+                <ErrorMessage name="weightKG" component="div" className="text-danger" />
+              </div>
+              <div className="mb-3 ms-3 w-25">
+                <label htmlFor="exampleInputHeight" className="form-label">
+                  Height (cm)
+                </label>
+                <Field
+                  type="number"
+                  className="form-control"
+                  id="Height"
+                  name="heightCM"
+                />
+                <ErrorMessage name="heightCM" component="div" className="text-danger" />
+              </div>
+              <div className="mb-3 ms-3 w-25">
+                <label htmlFor="exampleInputAddress" className="form-label">
+                  Address
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="Address"
+                  name="address"
+                />
+                <ErrorMessage name="address" component="div" className="text-danger" />
+              </div>
+              <div className="mb-3 ms-3 w-25">
+                <label htmlFor="exampleInputContact" className="form-label">
+                  Contact number
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="Contact"
+                  name="contact"
+                />
+                <ErrorMessage name="contact" component="div" className="text-danger" />
+              </div>
+              <div className="mb-3 ms-3 w-25">
+                <label htmlFor="exampleInputEmergrncy" className="form-label">
+                  Emergency contact number
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="Emergrncy"
+                  name="emergencyContact"
+                />
+                <ErrorMessage name="emergencyContact" component="div" className="text-danger" />
+              </div>
+              <button type="submit" className="btn btn-primary ms-3" disabled={isSubmitting}>
+                Submit
+              </button>
+            </Form>
+        )}
+      </Formik>
     </div>
   );
 }

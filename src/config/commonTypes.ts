@@ -29,6 +29,10 @@ export interface IPatientsCreate {
   dob: Date;
 }
 
+export interface IFormikHandlers{
+  resetForm(): void;
+}
+
 export interface IMedicalRecords {
   sampleCollectedDate: Date;
   sugarLevelMmol: number;
