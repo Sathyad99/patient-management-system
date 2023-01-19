@@ -13,7 +13,7 @@ export function AddPatient() {
     dob: Yup.date().max(new Date()).required("Date of birth is required"),
     weightKG: Yup.number().positive().required("Weight is required"),
     heightCM: Yup.number().positive().required("Height is required"),
-    address: Yup.number().positive().required("Address is required"),
+    address: Yup.string().required("Address is required"),
     contact: Yup.string()
       .min(
         10,
@@ -50,10 +50,10 @@ export function AddPatient() {
     postPatients(
       values,
       (successData: any) => {
-        toast(successData);
+        toast.success(successData);
         form.resetForm();
       },
-      (errorData: any) => toast("Unable to create the patient")
+      (errorData: any) => toast.error("Unable to create the patient")
     );
   };
 

@@ -96,7 +96,7 @@ export function AllPatients() {
         patientId,
         values,
         (successData: any) => {
-          toast(successData);
+          toast.success(successData);
           if (successData != null) {
             handleCloseEdit();
           }
@@ -106,7 +106,7 @@ export function AllPatients() {
           );
         },
         (errorData: any) => {
-          toast("Unable to create the patient");
+          toast.error("Unable to create the patient");
 
           if (errorData != null) {
             handleCloseEdit();
@@ -123,8 +123,8 @@ export function AllPatients() {
     patientId &&
       deletePatients(
         patientId,
-        (successData: any) => toast(successData),
-        (errorData: any) => toast(errorData)
+        (successData: any) => toast.success(successData),
+        (errorData: any) => toast.error(errorData)
       );
   };
 
