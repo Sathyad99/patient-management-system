@@ -8,26 +8,27 @@ import { useDispatch } from "react-redux";
 import { getPatientsSuccess } from "../redux/slices/patientSlice";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { IPatients, IPatientsEdit } from "../config/commonTypes";
+import {
+  IPatients,
+  IPatientsEdit,
+} from "../config/commonTypes";
 import { IState } from "../config/commonTypes";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
 
 export function AllPatients() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [currentPatientID, setCurrentPatientID] = useState<number>();
-  const [weightKG, setWeight] = useState("");
-  const [heightCM, setHeight] = useState("");
-  const [address, setAddress] = useState("");
-  const [contact, setContact] = useState("");
-  const [emergencyContact, setEmergency] = useState("");
-  const [show, setShow] = useState(false);
+  // const [currentPatient, setCurrentPatient] = useState<IPatients>();
+  const [showEdit, setShowEdit] = useState(false);
 
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+  const handleCloseEdit = () => setShowEdit(false);
+  const handleShowEdit = () => setShowEdit(true);
 
   const patients: IPatients[] = useSelector(
     (state: IState) => state.patients.patients
@@ -41,16 +42,53 @@ export function AllPatients() {
     );
   }, []);
 
-  const submitHandler = async (patientId: number | undefined) => {
-    const values: IPatientsEdit = {
-      name: "",
-      weightKG: +weightKG,
-      heightCM: +heightCM,
-      address: address,
-      contact: contact,
-      emergencyContact: emergencyContact,
-    };
-    console.log("Checking the new values array", values);
+  const editValidationSchema = Yup.object().shape({
+    weightKG: Yup.number().positive().required("Weight is required"),
+    heightCM: Yup.number().positive().required("Height is required"),
+    address: Yup.string().required("Address is required"),
+    contact: Yup.string()
+      .min(
+        10,
+        ({ min }) => `Contact number should not be less than ${min} digits`
+      )
+      .max(
+        10,
+        ({ max }) => `Contact number should not be longer than ${max} digits`
+      )
+      .required("Contact number is required"),
+    emergencyContact: Yup.string()
+      .min(
+        10,
+        ({ min }) => `Contact number should not be less than ${min} digits`
+      )
+      .max(
+        10,
+        ({ max }) => `Contact number should not be longer than ${max} digits`
+      )
+      .required("Contact number is required"),
+  });
+
+  const currentPatient = patients.find(
+    (patient) => patient.id === currentPatientID
+  );
+  console.log("Yeeaahh it's working", currentPatient);
+
+  const initialValues: IPatientsEdit = {
+    name: "",
+    weightKG: currentPatient?.weightKG ? currentPatient?.weightKG : 0,
+    heightCM: currentPatient?.heightCM ? currentPatient?.heightCM : 0,
+    address: currentPatient?.address ? currentPatient?.address : "",
+    contact: currentPatient?.contact ? currentPatient?.contact : "",
+    emergencyContact: currentPatient?.emergencyContact
+      ? currentPatient?.emergencyContact
+      : "",
+  };
+
+  const handleSubmit = async (
+    patientId: number | undefined,
+    values: IPatientsEdit
+  ) => {
+    console.log("Checking the new values", values);
     console.log("Checking the patient ID", patientId);
 
     patientId &&
@@ -59,11 +97,27 @@ export function AllPatients() {
         values,
         (successData: any) => {
           toast(successData);
+          if (successData != null) {
+            handleCloseEdit();
+          }
+          getPatients(
+            (successData: any) => dispatch(getPatientsSuccess(successData)),
+            (errorData: any) => console.log(errorData)
+          );
         },
-        (errorData: any) => toast("Unable to create the patient")
+        (errorData: any) => {
+          toast("Unable to create the patient");
+
+          if (errorData != null) {
+            handleCloseEdit();
+          }
+        }
       );
   };
 
+  const handleReset = (setValues: (values: IPatientsEdit) => void) => {
+    setValues(initialValues);
+  };
   const deleteHandler = async (patientId: number | undefined) => {
     console.log("Checking the patient ID", patientId);
     patientId &&
@@ -119,10 +173,8 @@ export function AllPatients() {
                     type="button"
                     className="btn btn-outline-primary"
                     onClick={() => {
-                      console.log("What's the wrooonnnngggg");
-                      handleShow();
+                      handleShowEdit();
                       setCurrentPatientID(patient.id);
-                      
                     }}
                   >
                     <svg
@@ -167,60 +219,106 @@ export function AllPatients() {
         </tbody>
       </table>
 
-      <Modal show={show} onHide={handleClose}>
+      <Modal show={showEdit} onHide={handleCloseEdit}>
         <Modal.Header closeButton>
           <Modal.Title>Patient details</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submitHandler(currentPatientID);
-            }}
+          <Formik
+            validationSchema={editValidationSchema}
+            initialValues={initialValues}
+            onSubmit={(values, form) => handleSubmit(currentPatientID, values)}
           >
-            <span className="input-group-text">Weight(kg)</span>
-            <input
-              type="text"
-              className="form-control"
-              value={weightKG}
-              onChange={(e) => setWeight(e.target.value)}
-            />
-            <span className="input-group-text">Height(cm)</span>
-            <input
-              type="text"
-              className="form-control"
-              value={heightCM}
-              onChange={(e) => setHeight(e.target.value)}
-            />
-            <span className="input-group-text">Address</span>
-            <input
-              type="text"
-              className="form-control"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
-            <span className="input-group-text">Contact number</span>
-            <input
-              type="text"
-              className="form-control"
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-            />
-            <span className="input-group-text">Emergency contact number</span>
-            <input
-              type="text"
-              className="form-control"
-              value={emergencyContact}
-              onChange={(e) => setEmergency(e.target.value)}
-            />
-            <button type="submit">Save Changes</button>
-          </form>
+            {({ isSubmitting, setValues }) => (
+              <Form>
+                <label htmlFor="weight" className="form-label">
+                  Weight(Kg)
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="weight"
+                  name="weightKG"
+                />
+                <ErrorMessage
+                  name="weightKG"
+                  component="div"
+                  className="text-danger mb-3"
+                />
+                <label htmlFor="height" className="form-label">
+                  Height(cm)
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="height"
+                  name="heightCM"
+                />
+                <ErrorMessage
+                  name="heightCM"
+                  component="div"
+                  className="text-danger mb-3"
+                />
+                <label htmlFor="address" className="form-label">
+                  Address
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="address"
+                  name="address"
+                />
+                <ErrorMessage
+                  name="address"
+                  component="div"
+                  className="text-danger mb-3"
+                />
+                <label htmlFor="contact" className="form-label">
+                  Contact number
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="contact"
+                  name="contact"
+                />
+                <ErrorMessage
+                  name="contact"
+                  component="div"
+                  className="text-danger mb-3"
+                />
+                <label htmlFor="emergencyContact" className="form-label">
+                  Emergency contact number
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="emergencyContact"
+                  name="emergencyContact"
+                />
+                <ErrorMessage
+                  name="emergencyContact"
+                  component="div"
+                  className="text-danger mb-3"
+                />
+                <Button
+                  type="submit"
+                  className="mt-2 me-2"
+                  disabled={isSubmitting}
+                >
+                  Save Changes
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="mt-2"
+                  onClick={() => handleReset(setValues)}
+                >
+                  Reset
+                </Button>
+              </Form>
+            )}
+          </Formik>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-        </Modal.Footer>
       </Modal>
 
       {/* Modal delete*/}

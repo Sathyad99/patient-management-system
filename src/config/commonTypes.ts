@@ -10,6 +10,15 @@ export interface IPatients {
   id: number;
 }
 
+export interface IPatientsEdit {
+  name: string;
+  weightKG: number;
+  heightCM: number;
+  address: string;
+  contact: string;
+  emergencyContact: string;
+}
+
 export interface IState {
   patients: {
     patients: IPatients[];
@@ -29,8 +38,17 @@ export interface IPatientsCreate {
   dob: Date;
 }
 
+// export interface CreatePatientAction {
+//   type: string;
+//   payload: IPatientsCreate;
+// }
+
 export interface IFormikHandlers{
   resetForm(): void;
+}
+
+export interface IFormikHelpers{
+  setValues(): void;
 }
 
 export interface IMedicalRecords {
@@ -61,11 +79,3 @@ export interface IMedicalRecordsCreate {
   patientId: number;
 }
 
-export interface IPatientsEdit {
-  name: string;
-  weightKG: number;
-  heightCM: number;
-  address: string;
-  contact: string;
-  emergencyContact: string;
-}

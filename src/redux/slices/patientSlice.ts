@@ -1,5 +1,4 @@
 import { createSlice} from "@reduxjs/toolkit";
-
 //initial state
 const initialState = {
   patients: [],
@@ -14,15 +13,20 @@ export const patientSlice = createSlice({
     getPatientsSuccess: (state, action) => {
       state.patients = action?.payload;
     },
-    createPatient:(state, action) => {
-      state.patients = action?.payload;
-      // return [...state, action?.payload];
-    }
+    // updatePatient: (state, action) => {
+    //   const updatedPatient = action?.payload;
+    //   state.patients = state.patients.map(patient => {
+    //     if(patient.id === updatedPatient.id){
+    //       return updatedPatient;
+    //     }
+    //     return patient;
+    //   });
+    // }
   },
 });
 
 //Generate actions
-export const {getPatientsSuccess, createPatient} = patientSlice.actions;
+export const {getPatientsSuccess} = patientSlice.actions;
 
 //Generate reducer
 export const patientReducer = patientSlice.reducer;
