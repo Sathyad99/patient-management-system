@@ -219,6 +219,8 @@ export function AllPatients() {
         </tbody>
       </table>
 
+      {/* Modal edit*/}
+
       <Modal show={showEdit} onHide={handleCloseEdit}>
         <Modal.Header closeButton>
           <Modal.Title>Patient details</Modal.Title>

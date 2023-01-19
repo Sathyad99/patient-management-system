@@ -1,6 +1,7 @@
-import { createSlice} from "@reduxjs/toolkit";
-//initial state
-const initialState = {
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { IPatients, IPatientsEdit } from "../../config/commonTypes";
+
+const initialState: {patients: IPatients[]} = {
   patients: [],
 };
 
@@ -10,23 +11,23 @@ export const patientSlice = createSlice({
   initialState,
   reducers: {
     //get patient details
-    getPatientsSuccess: (state, action) => {
-      state.patients = action?.payload;
+    getPatientsSuccess: (state, action:PayloadAction<IPatients[]>) => {
+      return {...state, patients:[...action.payload]}
     },
-    // updatePatient: (state, action) => {
-    //   const updatedPatient = action?.payload;
-    //   state.patients = state.patients.map(patient => {
-    //     if(patient.id === updatedPatient.id){
-    //       return updatedPatient;
-    //     }
-    //     return patient;
-    //   });
-    // }
+    updatePatient: (state, action:PayloadAction<IPatients>) => {
+      const updatedPatient = action?.payload;
+      state.patients = state.patients.map(patient => {
+        if(patient.id === updatedPatient.id){
+          return updatedPatient;
+        }
+        return patient;
+      })
+    }
   },
 });
 
 //Generate actions
-export const {getPatientsSuccess} = patientSlice.actions;
+export const {getPatientsSuccess, updatePatient} = patientSlice.actions;
 
 //Generate reducer
 export const patientReducer = patientSlice.reducer;

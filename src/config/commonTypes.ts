@@ -1,5 +1,4 @@
 export interface IPatients {
-  length: any;
   name: string;
   weightKG: number;
   heightCM: number;
