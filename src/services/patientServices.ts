@@ -2,8 +2,7 @@ import api from "../config/api";
 import {
   IMedicalRecordsCreate,
   IPatients,
-  IPatientsCreate,
-  IPatientsEdit
+  IPatientsCreate
 } from "../config/commonTypes";
 
 export const getPatients = (
@@ -82,7 +81,7 @@ export const deletePatients = (
 
 export const editPatients = (
   patientId: number,
-  values: IPatientsEdit,
+  values: IPatients,
   success: (d: any) => void,
   failed: (d: any) => void
 ) => {

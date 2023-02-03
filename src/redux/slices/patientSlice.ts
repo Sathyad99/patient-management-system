@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { IPatients, IPatientsEdit } from "../../config/commonTypes";
+import { IPatients } from "../../config/commonTypes";
 
 const initialState: {patients: IPatients[]} = {
   patients: [],
@@ -22,7 +22,8 @@ export const patientSlice = createSlice({
         }
         return patient;
       })
-    }
+    },
+    deletePatient: (state, action) => {}
   },
 });
 

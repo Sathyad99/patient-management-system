@@ -5,7 +5,7 @@ import {
   getMedicalRecordsById,
 } from "../services/patientServices";
 import { useDispatch, useSelector } from "react-redux";
-import { getRecordsSuccess } from "../redux/slices/medicalRecordsSlice";
+import { getRecordsSuccess, updateMedicalRecords } from "../redux/slices/medicalRecordsSlice";
 import {
   IMedicalRecords,
   IMedicalRecordsCreate,
@@ -62,10 +62,10 @@ export function PatientProfile() {
     addMedicalRecords(
       values,
       (successData: any) => {
-        toast(successData);
+        toast.success(successData);
       },
       (errorData: any) => {
-        toast("Unable to add the record");
+        toast.error("Unable to add the record");
       }
     );
     setDate("");
@@ -73,6 +73,7 @@ export function PatientProfile() {
     setSugar("");
     setPlatelet("");
     setHemogblobin("");
+    // dispatch(updateMedicalRecords(values))
 
     handleClose();
   };

@@ -5,20 +5,26 @@ import {
   editPatients,
 } from "../services/patientServices";
 import { useDispatch } from "react-redux";
-import { getPatientsSuccess } from "../redux/slices/patientSlice";
+import {
+  getPatientsSuccess,
+  updatePatient,
+} from "../redux/slices/patientSlice";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {
-  IPatients,
-  IPatientsEdit,
-} from "../config/commonTypes";
+import { IPatients, IPatientsEditValidation } from "../config/commonTypes";
 import { IState } from "../config/commonTypes";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Modal from "react-bootstrap/Modal";
-import Button from "react-bootstrap/Button";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+// import Button from "react-bootstrap/Button";
+// import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+// import { ObjectSchema } from "yup/es";
+// import { EditPatientModal } from "../components/EditPatientModal";
+import { ErrorMessage, Field, Form, Formik } from "formik";
+import { Button } from "react-bootstrap";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 
 export function AllPatients() {
   const dispatch = useDispatch();
@@ -26,9 +32,13 @@ export function AllPatients() {
   const [currentPatientID, setCurrentPatientID] = useState<number>();
   // const [currentPatient, setCurrentPatient] = useState<IPatients>();
   const [showEdit, setShowEdit] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
 
   const handleCloseEdit = () => setShowEdit(false);
   const handleShowEdit = () => setShowEdit(true);
+
+  const handleCloseDelete = () => setShowDelete(false);
+  const handleShowDelete = () => setShowDelete(true);
 
   const patients: IPatients[] = useSelector(
     (state: IState) => state.patients.patients
@@ -43,9 +53,10 @@ export function AllPatients() {
   }, []);
 
   const editValidationSchema = Yup.object().shape({
-    weightKG: Yup.number().positive().required("Weight is required"),
-    heightCM: Yup.number().positive().required("Height is required"),
-    address: Yup.string().required("Address is required"),
+    name: Yup.string().required("Name cannot be empty"),
+    weightKG: Yup.number().positive().required("Weight cannot be empty"),
+    heightCM: Yup.number().positive().required("Height cannot be empty"),
+    address: Yup.string().required("Address cannot be empty"),
     contact: Yup.string()
       .min(
         10,
@@ -55,7 +66,7 @@ export function AllPatients() {
         10,
         ({ max }) => `Contact number should not be longer than ${max} digits`
       )
-      .required("Contact number is required"),
+      .required("Contact number cannot be empty"),
     emergencyContact: Yup.string()
       .min(
         10,
@@ -65,7 +76,7 @@ export function AllPatients() {
         10,
         ({ max }) => `Contact number should not be longer than ${max} digits`
       )
-      .required("Contact number is required"),
+      .required("Emergency contact number cannot be empty"),
   });
 
   const currentPatient = patients.find(
@@ -73,8 +84,12 @@ export function AllPatients() {
   );
   console.log("Yeeaahh it's working", currentPatient);
 
-  const initialValues: IPatientsEdit = {
-    name: "",
+  const initialValues: IPatients = {
+    name: currentPatient?.name ? currentPatient.name : "",
+    id: currentPatient?.id ? currentPatient?.id : 0,
+    dob: currentPatient?.dob
+      ? currentPatient?.dob.toString().substring(0, 10)
+      : new Date(),
     weightKG: currentPatient?.weightKG ? currentPatient?.weightKG : 0,
     heightCM: currentPatient?.heightCM ? currentPatient?.heightCM : 0,
     address: currentPatient?.address ? currentPatient?.address : "",
@@ -86,7 +101,7 @@ export function AllPatients() {
 
   const handleSubmit = async (
     patientId: number | undefined,
-    values: IPatientsEdit
+    values: IPatients
   ) => {
     console.log("Checking the new values", values);
     console.log("Checking the patient ID", patientId);
@@ -100,10 +115,6 @@ export function AllPatients() {
           if (successData != null) {
             handleCloseEdit();
           }
-          getPatients(
-            (successData: any) => dispatch(getPatientsSuccess(successData)),
-            (errorData: any) => console.log(errorData)
-          );
         },
         (errorData: any) => {
           toast.error("Unable to create the patient");
@@ -113,9 +124,10 @@ export function AllPatients() {
           }
         }
       );
+    dispatch(updatePatient(values));
   };
 
-  const handleReset = (setValues: (values: IPatientsEdit) => void) => {
+  const handleReset = (setValues: (values: IPatients) => void) => {
     setValues(initialValues);
   };
   const deleteHandler = async (patientId: number | undefined) => {
@@ -123,10 +135,22 @@ export function AllPatients() {
     patientId &&
       deletePatients(
         patientId,
-        (successData: any) => toast.success(successData),
-        (errorData: any) => toast.error(errorData)
+        (successData: any) => {
+          toast.success(successData);
+          if (successData != null) {
+            handleCloseDelete();
+          }
+        },
+        (errorData: any) => {
+          toast.error(errorData);
+          if (errorData != null) {
+            handleCloseDelete();
+          }
+        }
       );
   };
+
+  // const {update, handleUpdate, errors} = useForm();
 
   return (
     <div>
@@ -196,7 +220,10 @@ export function AllPatients() {
                 <td>
                   {/* Delete button */}
                   <button
-                    onClick={() => setCurrentPatientID(patient.id)}
+                    onClick={() => {
+                      handleShowDelete();
+                      setCurrentPatientID(patient.id);
+                    }}
                     type="button"
                     className="btn btn-outline-danger"
                     data-bs-toggle="modal"
@@ -219,6 +246,15 @@ export function AllPatients() {
         </tbody>
       </table>
 
+      {/* <EditPatientModal
+        show={showEdit}
+        onHide={handleCloseEdit}
+        // onSubmit={handleSubmit}
+        currentPatientID={currentPatientID}
+        initialValues={initialValues}
+        validationSchema={editValidationSchema}
+      /> */}
+
       {/* Modal edit*/}
 
       <Modal show={showEdit} onHide={handleCloseEdit}>
@@ -233,6 +269,34 @@ export function AllPatients() {
           >
             {({ isSubmitting, setValues }) => (
               <Form>
+                <label htmlFor="id" className="form-label">
+                  Patient id
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="id"
+                  name="id"
+                  disabled={true}
+                />
+                <label htmlFor="name" className="form-label">
+                  Name
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="name"
+                  name="name"
+                />
+                <label htmlFor="dob" className="form-label">
+                  Date of birth
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="dob"
+                  name="dob"
+                />
                 <label htmlFor="weight" className="form-label">
                   Weight(Kg)
                 </label>
@@ -323,46 +387,125 @@ export function AllPatients() {
         </Modal.Body>
       </Modal>
 
+      {/* <Modal show={showEdit} onHide={handleCloseEdit}>
+        <Modal.Header closeButton>
+          <Modal.Title>Patient details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+              <form>
+                <label htmlFor="id" className="form-label">
+                  Patient id
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="id"
+                  name="id"
+                  disabled={true}
+                />
+                <label htmlFor="name" className="form-label">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="name"
+                  name="name"
+                />
+                <label htmlFor="dob" className="form-label">
+                  Date of birth
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="dob"
+                  name="dob"
+                />
+                <label htmlFor="weight" className="form-label">
+                  Weight(Kg)
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="weight"
+                  name="weightKG"
+                />
+                <label htmlFor="height" className="form-label">
+                  Height(cm)
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="height"
+                  name="heightCM"
+                />
+                <label htmlFor="address" className="form-label">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="address"
+                  name="address"
+                />
+                <label htmlFor="contact" className="form-label">
+                  Contact number
+                </label>
+                <Field
+                  type="text"
+                  className="form-control"
+                  id="contact"
+                  name="contact"
+                />
+                <label htmlFor="emergencyContact" className="form-label">
+                  Emergency contact number
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="emergencyContact"
+                  name="emergencyContact"
+                />
+                <Button
+                  type="submit"
+                  className="mt-2 me-2"
+                  // disabled={isSubmitting}
+                >
+                  Save Changes
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="mt-2"
+                  // onClick={() => handleReset(setValues)}
+                >
+                  Reset
+                </Button>
+              </form>
+        </Modal.Body>
+      </Modal> */}
+
       {/* Modal delete*/}
-      <div
-        className="modal fade"
-        id="deletemodal"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modeal-lg modal-dialog-centered">
-          <div className="modal-content">
-            <div className="modal-header">
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div className="modal-body">
-              Are you sure you want to delete the patient?
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                data-bs-dismiss="modal"
-                onClick={() => deleteHandler(currentPatientID)}
-              >
-                Yes
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Modal show={showDelete} onHide={handleCloseDelete}>
+        <Modal.Body>
+          <div>Are you sure you want to delete the patient?</div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            type="button"
+            className="mt-2 me-2"
+            onClick={handleCloseDelete}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            className="btn-danger mt-2"
+            onClick={() => deleteHandler(currentPatientID)}
+          >
+            Yes
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

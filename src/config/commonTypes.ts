@@ -1,3 +1,7 @@
+import { RequiredNumberSchema } from "yup/lib/number";
+import { RequiredStringSchema } from "yup/lib/string";
+import { AnyObject } from "yup/lib/types";
+
 export interface IPatients {
   name: string;
   weightKG: number;
@@ -5,11 +9,24 @@ export interface IPatients {
   address: string;
   contact: string;
   emergencyContact: string;
-  dob: Date;
+  dob: Date | string;
   id: number;
 }
 
-export interface IPatientsEdit {
+// export interface IPatientsEditValidation {
+//   [key: string]:
+//     | RequiredStringSchema<string | undefined, AnyObject>
+//     | RequiredNumberSchema<number | undefined, AnyObject>;
+//   name: RequiredStringSchema<string | undefined, AnyObject>;
+//   weightKG: RequiredNumberSchema<number | undefined, AnyObject>;
+//   heightCM: RequiredNumberSchema<number | undefined, AnyObject>;
+//   address: RequiredStringSchema<string | undefined, AnyObject>;
+//   contact: RequiredStringSchema<string | undefined, AnyObject>;
+//   emergencyContact: RequiredStringSchema<string | undefined, AnyObject>;
+// }
+
+export interface IPatientsEditValidation {
+  [key: string]: string | number;
   name: string;
   weightKG: number;
   heightCM: number;
@@ -18,13 +35,14 @@ export interface IPatientsEdit {
   emergencyContact: string;
 }
 
+
 export interface IState {
   patients: {
     patients: IPatients[];
   };
   records: {
     records: IMedicalRecords[];
-  }
+  };
 }
 
 export interface IPatientsCreate {
@@ -42,11 +60,11 @@ export interface IPatientsCreate {
 //   payload: IPatientsCreate;
 // }
 
-export interface IFormikHandlers{
+export interface IFormikHandlers {
   resetForm(): void;
 }
 
-export interface IFormikHelpers{
+export interface IFormikHelpers {
   setValues(): void;
 }
 
@@ -77,4 +95,3 @@ export interface IMedicalRecordsCreate {
   hbLevelGdl: number;
   patientId: number;
 }
-
